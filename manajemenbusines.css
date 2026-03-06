@@ -1,0 +1,31 @@
+body{font-family:Segoe UI,sans-serif;margin:0;padding:0;background:#f4f6f9;color:#111;transition:.3s}
+.dark{background:#1e1e2f;color:#fff}
+.navbar{background:#111827;color:white;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;font-weight:bold}
+button{padding:6px 12px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;transition:.2s}
+button:hover{opacity:.85}
+.primary{background:#2563eb;color:white}
+.success{background:#16a34a;color:white}
+.warning{background:#f59e0b;color:white}
+.danger{background:#dc2626;color:white}
+.container{padding:20px}
+.card-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.card{background:white;padding:15px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.08);min-width:150px;text-align:center;transition:.3s}
+.dark .card{background:#2a2a3d}
+.badge{padding:2px 6px;border-radius:6px;font-size:12px;color:white;font-weight:bold}
+.badge.profit{background:#16a34a}
+.badge.loss{background:#dc2626}
+.kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.kpi-card{flex:1 1 120px;background:#2563eb;color:white;padding:10px;border-radius:10px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.dark .kpi-card{background:#2a2a3d;color:white}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;background:white;margin-top:15px}
+.dark table{background:#1f2937;color:#fff}
+th,td{padding:8px;text-align:center;border-bottom:1px solid #eee;color:inherit}
+th{background:#0f172a;color:white;font-size:12px}
+input,select,textarea{width:100%;padding:6px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#111;transition:.3s}
+.dark input,.dark select,.dark textarea{background:#2a2a3d;color:#fff;border:1px solid #555}
+input::placeholder, select::placeholder, textarea::placeholder{color:#ccc !important}
+canvas{background:white;border-radius:10px;padding:10px;margin-top:20px}
+.dark canvas{background:#2a2a3d}
+#aiPanel{position:fixed;right:-360px;top:60px;width:340px;height:480px;background:white;border-left:1px solid #ddd;padding:12px;transition:.3s;overflow:auto;z-index:999}
+.dark #aiPanel{background:#2a2a3d;color:white}
