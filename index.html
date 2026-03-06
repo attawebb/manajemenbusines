@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tong Business PRO+ AI SaaS</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<style>
+/* ===== Global Styles ===== */
+body{font-family:Segoe UI, sans-serif;margin:0;padding:0;background:#f4f6f9;color:#111;transition:.3s}
+.dark{background:#1e1e2f;color:#fff}
+button{padding:6px 12px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;transition:.2s}
+button:hover{opacity:.85}
+.primary{background:#2563eb;color:white}
+.success{background:#16a34a;color:white}
+.warning{background:#f59e0b;color:white}
+.danger{background:#dc2626;color:white}
+.container{padding:20px}
+.card-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.card{background:white;padding:15px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.08);min-width:150px;text-align:center;transition:.3s}
+.dark .card{background:#2a2a3d}
+.badge{padding:2px 6px;border-radius:6px;font-size:12px;color:white;font-weight:bold}
+.badge.profit{background:#16a34a}
+.badge.loss{background:#dc2626}
+table{width:100%;border-collapse:collapse;background:white;margin-top:15px;color:#111}
+.dark table{background:#1f2937;color:#fff}
+th,td{padding:8px;text-align:center;border-bottom:1px solid #eee;color:inherit;}
+th{background:#0f172a;color:white;font-size:12px}
+input,select,textarea{width:100%;padding:6px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#111;transition:.3s}
+.dark input,.dark select,.dark textarea{background:#2a2a3d;color:#fff;border:1px solid #555}
+input::placeholder, select::placeholder, textarea::placeholder{color:#ccc !important;}
+canvas{background:white;border-radius:10px;padding:10px;margin-top:20px}
+.dark canvas{background:#2a2a3d}
+#aiPanel{position:fixed;right:-360px;top:60px;width:340px;height:480px;background:white;border-left:1px solid #ddd;padding:12px;transition:.3s;overflow:auto;z-index:999}
+.dark #aiPanel{background:#2a2a3d;color:white}
+.kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.kpi-card{flex:1 1 120px;background:#2563eb;color:white;padding:10px;border-radius:10px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.dark .kpi-card{background:#2a2a3d;color:white}
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<div class="navbar" style="background:#111827;color:white;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;font-weight:bold;">
+<div>📊 Tong Business PRO+ AI SaaS</div>
+<div>
+<button onclick="toggleDark()">🌙</button>
+<button onclick="render()">🔄</button>
+<button onclick="toggleAI()">🤖</button>
+</div>
+</div>
+
+<div class="container">
+
+<!-- Dashboard Cards -->
+<div class="card-grid">
+<div class="card">Total Omset<br><b id="omset">Rp0</b></div>
+<div class="card">Total Laba<br><b id="laba">Rp0</b> <span id="labaStatus" class="badge"></span></div>
+<div class="card">Pendapatan Shopee<br><b id="shopee">Rp0</b></div>
+<div class="card">Total Penarikan<br><b id="tarik">Rp0</b></div>
+<div class="card">Produk Terlaris<br><b id="terlaris">-</b></div>
+</div>
+
+<!-- Controls -->
+<div style="margin-bottom:15px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+<label>Filter Bulan</label>
+<select id="filter" onchange="render()">
+<option value="all">Semua</option>
+<option value="01">Jan</option>
+<option value="02">Feb</option>
+<option value="03">Mar</option>
+<option value="04">Apr</option>
+<option value="05">Mei</option>
+<option value="06">Jun</option>
+<option value="07">Jul</option>
+<option value="08">Agu</option>
+<option value="09">Sep</option>
+<option value="10">Okt</option>
+<option value="11">Nov</option>
+<option value="12">Des</option>
+</select>
+<button class="primary" onclick="tambah()">Tambah Data</button>
+<button class="warning" onclick="tarikSaldo()">Tarik Saldo</button>
+<button class="success" onclick="exportExcel()">Export Excel</button>
+<button onclick="backup()">Backup</button>
+<button onclick="shareWA()">Share WA</button>
+</div>
+
+<!-- Charts -->
+<canvas id="chartLaba" height="90"></canvas>
+<canvas id="chartShopee" height="90"></canvas>
+
+<!-- KPI Mini Cards -->
+<div class="kpi">
+<div class="kpi-card">Total Transaksi<br><span id="kpiTransaksi">0</span></div>
+<div class="kpi-card">Rata-rata Laba<br><span id="kpiAvgLaba">Rp0</span></div>
+<div class="kpi-card">Top Produk<br><span id="kpiTopProduk">-</span></div>
+</div>
+
+<!-- Data Table -->
+<h3>Data Penjualan</h3>
+<div style="overflow:auto">
+<table>
+<thead>
+<tr>
+<th>No</th>
+<th>Tanggal</th>
+<th>Produk</th>
+<th>Beli</th>
+<th>Jual</th>
+<th>Resi</th>
+<th>Pot1</th>
+<th>Pot2</th>
+<th>Pot3</th>
+<th>Total Pot</th>
+<th>Laba</th>
+<th>Status</th>
+<th>Shopee</th>
+<th>Hapus</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+
+<!-- Riwayat Penarikan -->
+<h3>Riwayat Penarikan Saldo</h3>
+<div style="overflow:auto">
+<table>
+<thead>
+<tr>
+<th>Tanggal</th>
+<th>Jumlah</th>
+<th>Tujuan</th>
+<th>Hapus</th>
+</tr>
+</thead>
+<tbody id="withdrawTable"></tbody>
+</table>
+</div>
+
+</div>
+
+<!-- AI Panel -->
+<div id="aiPanel">
+<h3>AI Insight</h3>
+<button onclick="aiAnalisa()">Analisa Bisnis</button>
+<button onclick="aiProduk()">Produk Terlaris</button>
+<button onclick="aiProfit()">Rekomendasi Profit</button>
+<div id="aiOut" style="font-size:14px;margin-top:10px"></div>
+</div>
+
+<script>
+// ===== Data =====
+let store = JSON.parse(localStorage.getItem('tongData')) || [];
+let withdraw = JSON.parse(localStorage.getItem('tongWithdraw')) || [];
+let chartLaba, chartShopee;
+
+// ===== Helpers =====
+function rupiah(n){ return 'Rp '+(n||0).toLocaleString('id-ID'); }
+function simpan(){ localStorage.setItem('tongData', JSON.stringify(store)); }
+function simpanWithdraw(){ localStorage.setItem('tongWithdraw', JSON.stringify(withdraw)); }
+
+// ===== CRUD =====
+function tambah(){ store.push({t:new Date().toISOString().slice(0,10),p:'',b:0,j:0,r:0,p1:0,p2:0,p3:0,sh:0}); simpan(); render(); }
+function update(i,key,val){ store[i][key]=key==='p'? val:parseFloat(val)||0; simpan(); render(); }
+function hapus(i){ if(confirm("Hapus data ini?")){ store.splice(i,1); simpan(); render(); } }
+
+// ===== Tarik Saldo =====
+function tarikSaldo(){
+let jumlah=parseFloat(prompt("Jumlah tarik saldo")); if(!jumlah) return;
+let tujuan=prompt("Tujuan penarikan")||"-";
+withdraw.push({tanggal:new Date().toISOString().slice(0,10),jumlah,tujuan});
+simpanWithdraw(); render();
+}
+function hapusTarik(i){ if(confirm("Hapus riwayat penarikan?")){ withdraw.splice(i,1); simpanWithdraw(); render(); } }
+
+// ===== Render =====
+function render(){
+let tbody=document.getElementById('tbody');
+tbody.innerHTML='';
+let labaBulan = new Array(12).fill(0);
+let shopeeBulan = new Array(12).fill(0);
+let om=0, lb=0, sp=0;
+let produk={};
+
+store.forEach((d,i)=>{
+let pot=d.p1+d.p2+d.p3;
+let laba=d.j-d.b-d.r-pot;
+om+=d.j; lb+=laba; sp+=d.sh;
+if(d.p) produk[d.p]=(produk[d.p]||0)+1;
+let m=new Date(d.t).getMonth(); labaBulan[m]+=laba; shopeeBulan[m]+=d.sh;
+let status = laba>0 ? 'Profit' : 'Loss';
+let badgeClass = laba>0 ? 'profit' : 'loss';
+tbody.innerHTML+=`<tr>
+<td>${i+1}</td>
+<td>${d.t}</td>
+<td><input value="${d.p}" onchange="update(${i},'p',this.value)"></td>
+<td><input value="${d.b}" onchange="update(${i},'b',this.value)"></td>
+<td><input value="${d.j}" onchange="update(${i},'j',this.value)"></td>
+<td><input value="${d.r}" onchange="update(${i},'r',this.value)"></td>
+<td><input value="${d.p1}" onchange="update(${i},'p1',this.value)"></td>
+<td><input value="${d.p2}" onchange="update(${i},'p2',this.value)"></td>
+<td><input value="${d.p3}" onchange="update(${i},'p3',this.value)"></td>
+<td>${rupiah(pot)}</td>
+<td>${rupiah(laba)}</td>
+<td><span class="badge ${badgeClass}">${status}</span></td>
+<td><input value="${d.sh}" onchange="update(${i},'sh',this.value)"></td>
+<td><button class="danger" onclick="hapus(${i})">❌</button></td>
+</tr>`;
+});
+
+// Total penarikan
+let totalTarik = withdraw.reduce((a,b)=>a+b.jumlah,0);
+document.getElementById('omset').innerText = rupiah(om);
+document.getElementById('laba').innerText = rupiah(lb - totalTarik);
+document.getElementById('shopee').innerText = rupiah(sp - totalTarik);
+document.getElementById('tarik').innerText = rupiah(totalTarik);
+let labaStatus = lb - totalTarik>0?'Profit':'Loss';
+let labaBadge = document.getElementById('labaStatus');
+labaBadge.innerText = labaStatus;
+labaBadge.className = 'badge '+(labaStatus==='Profit'?'profit':'loss');
+
+// KPI
+document.getElementById('kpiTransaksi').innerText = store.length;
+document.getElementById('kpiAvgLaba').innerText = rupiah(store.reduce((a,b)=>a+(b.j-b.b-b.r-b.p1-b.p2-b.p3),0)/Math.max(store.length,1));
+let topProd='-'; let max=0; for(let p in produk){if(produk[p]>max){max=produk[p]; topProd=p;}} 
+document.getElementById('kpiTopProduk').innerText = topProd;
+
+// Render Withdraw
+renderWithdraw();
+
+// Draw Charts
+drawCharts(labaBulan, shopeeBulan);
+}
+
+// ===== Render Withdraw =====
+function renderWithdraw(){
+let el=document.getElementById('withdrawTable'); el.innerHTML='';
+withdraw.forEach((w,i)=>{
+el.innerHTML+=`<tr>
+<td>${w.tanggal}</td>
+<td>${rupiah(w.jumlah)}</td>
+<td>${w.tujuan}</td>
+<td><button class="danger" onclick="hapusTarik(${i})">❌</button></td>
+</tr>`;
+});
+}
+
+// ===== Charts =====
+function drawCharts(labaBulan, shopeeBulan){
+if(chartLaba) chartLaba.destroy();
+if(chartShopee) chartShopee.destroy();
+chartLaba = new Chart(document.getElementById('chartLaba'),{
+type:'line', data:{
+labels:['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+datasets:[{label:'Laba Bersih', data:labaBulan, borderColor:'#2563eb', backgroundColor:'#2563eb33', tension:0.4}]
+}, options:{responsive:true, plugins:{legend:{display:true}}, interaction:{mode:'index',intersect:false}}
+});
+chartShopee = new Chart(document.getElementById('chartShopee'),{
+type:'bar', data:{
+labels:['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+datasets:[{label:'Pendapatan Shopee', data:shopeeBulan, backgroundColor:'#16a34a'}]
+}, options:{responsive:true, plugins:{legend:{display:true}}, interaction:{mode:'index',intersect:false}}
+});
+}
+
+// ===== Dark & AI =====
+function toggleDark(){document.body.classList.toggle('dark');}
+function toggleAI(){let p=document.getElementById('aiPanel'); p.style.right=p.style.right==='0px'?'-360px':'0px';}
+
+// ===== Export & Backup =====
+function exportExcel(){let ws=XLSX.utils.json_to_sheet(store); let wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Data"); XLSX.writeFile(wb,"tong-bisnis.xlsx");}
+function backup(){let blob=new Blob([JSON.stringify(store)],{type:"application/json"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="tong-backup.json"; a.click();}
+function shareWA(){let msg="Laporan omset "+document.getElementById("omset").innerText; window.open("https://wa.me/?text="+encodeURIComponent(msg));}
+
+// ===== AI Insight =====
+function aiAnalisa(){let laba=store.reduce((a,b)=>a+(b.j-b.b-b.r-b.p1-b.p2-b.p3),0); document.getElementById("aiOut").innerHTML="Total laba bisnis: "+rupiah(laba);}
+function aiProduk(){let map={}; store.forEach(d=>{if(d.p) map[d.p]=(map[d.p]||0)+1;}); let top='-'; let max=0; for(let p in map){if(map[p]>max){max=map[p];top=p;}} document.getElementById("aiOut").innerHTML="Produk terlaris: "+top;}
+function aiProfit(){let avg=store.reduce((a,b)=>a+(b.j-b.b),0)/(store.length||1); document.getElementById("aiOut").innerHTML="Rekomendasi harga jual: "+rupiah(avg);}
+
+// ===== Init =====
+render();
+</script>
+</body>
+                                           </html>
